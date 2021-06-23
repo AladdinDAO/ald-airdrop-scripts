@@ -8,7 +8,7 @@ const xForceAddress = '0xe7f445b93eb9cdabfe76541cc43ff8de930a58e6'
 const oldForceETHSushiLPAddress = '0xd10240e5365d4b86821d746a91ee1dcc84c3eff7'
 const oldForceETHUniLPAddress = '0x5dc1a938d9caa215dd81d9425cd08ee19e7fb2e8'
 const snapshotBlock = 12171679
-const snapshotBlock1 = 12169679
+const snapshotBlockMiddle = 12169679
 
 const getInteractAddresses = async (contractAddress, startBlock, dataFilename) => {
   const pastEvents = await getPastEvents(contractAddress, startBlock, snapshotBlock)
@@ -69,6 +69,7 @@ const takeSnapshot = async (tokenContractAddress, startBlock, addressFilename, b
 
 const main = async () => {
 
+  // Get the start block from etherscan by querying the creation transaction
   await takeSnapshot(oldForceAddress,
     11719589,
     '../jsons/01-forcedao-old-force-addresses.json',
@@ -116,22 +117,31 @@ const getIndependentAddresses = async () => {
 
     for (const addr in data) {
       const balance = data[addr]
+      // remove zero balance and hacked addresses
       if (Number(balance) > 0 && (blacklistData.indexOf(addr.trim().toLowerCase()) === -1)) {
         const key = addr.trim().toLowerCase()
         nonZeroBalance[key] = 1
-        console.log(addr, ',', balance, ',', (blacklistData.indexOf(addr.trim().toLowerCase())))
       }
     }
   }
 
   // remove blacklisted address
   const mergedAddress = Object.keys(nonZeroBalance)
-  // for (const addr of blacklist) {
-  //   delete mergedAddress[addr]
-  // }
   fs.writeFileSync('../jsons/05-forcedao-ald-airdrop-forcedao-addresses.json', JSON.stringify(mergedAddress), { flag: 'w' })
   return mergedAddress
 }
 
-main()
-getIndependentAddresses()
+const outputAirdropCsv = async() => {
+  const addressList = require('../jsons/05-forcedao-ald-airdrop-forcedao-addresses.json')
+  console.log(addressList.length)
+  const length = addressList.length
+  const toRelease = 500000
+  const average = (toRelease / length).toFixed(8)
+  for (const addr of addressList) {
+    console.log(`${addr},${average}`)
+  }
+}
+
+// main()
+// getIndependentAddresses()
+// getAirdropCsv()
